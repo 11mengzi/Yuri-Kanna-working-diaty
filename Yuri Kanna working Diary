@@ -1,0 +1,155 @@
+import random
+
+class Player:
+    def __init__(self, name):
+        self.name = name
+        self.debt = 10000 # 假设初始债务为10000
+        self.balance = 0 # 初始余额
+        self.energy = 100 # 初始体力值
+        self.happiness = 100 # 初始快乐值
+        self.integrity = 100 # 初始节操值
+        self.rock_paper_scissors_streak = 0 # 猜拳连胜次数
+        self.time_units = 150 # 游戏开始时的时间单位
+        self.achievements = set() # 记录玩家获得的成就
+
+    def work(self, job):
+        jobs = {
+        'cleaning': {'income': 50, 'energy_cost': 10, 'happiness_cost': 5},
+        'rock_paper_scissors': {'income': 30, 'energy_cost': 5, 'happiness_cost': 10},
+        'service': {'income': 100, 'energy_cost': 20, 'integrity_cost': 10} # 新增服务工作
+        }
+        if self.energy >= jobs[job]['energy_cost']:
+            self.balance += jobs[job]['income']
+            self.energy -= jobs[job]['energy_cost']
+            if job == 'service':
+                self.integrity -= jobs[job]['integrity_cost']
+                print(f"{self.name} 通过 {job} 赚取了 {jobs[job]['income']}，但是有一些名為節操的東西好像在這個過程中喪失了。")
+            else:
+                self.happiness -= jobs[job]['happiness_cost']
+                print(f"{self.name} 通过 {job} 赚取了 {jobs[job]['income']}。")
+        else:
+            print("体力不足，无法工作。")
+
+    def visit_store(self):
+        items = {
+            'E': {'name': '快樂水', 'price': 20, 'energy_gain': 30, 'integrity_gain': 0, 'happiness_gain': 10},
+            'I': {'name': '小黃書', 'price': 50, 'energy_gain': 10, 'integrity_gain': 20, 'happiness_gain': 15},
+            'H': {'name': '紫色心情', 'price': 30, 'energy_gain': 20, 'integrity_gain': 10, 'happiness_gain': 5}
+        }
+        print("欢迎来到商店！以下是可购买的物品：")
+        for key, details in items.items():
+            print(f"{key}: {details['name']} - 价格 {details['price']}，体力恢复 {details['energy_gain']}，节操恢复 {details['integrity_gain']}，心情恢复 {details['happiness_gain']}")
+        choice = input("请输入您想购买的物品（E/I/H），或者输入 'exit' 离开商店: ")
+        if choice in items:
+            if self.balance >= items[choice]['price']:
+                self.balance -= items[choice]['price']
+                self.energy += items[choice]['energy_gain']
+                self.integrity += items[choice]['integrity_gain']
+                self.happiness += items[choice]['happiness_gain']
+                print(f"您已购买{items[choice]['name']}，花费了{items[choice]['price']}。体力、节操和心情值已更新。")
+            else:
+                print("余额不足，无法购买该物品。")
+        elif choice == 'exit':
+            print("感谢光临，再见！")
+        else:
+            print("无效的选择，请重新输入。")
+
+    def play_rock_paper_scissors(self):
+        choices = ['石头', '剪刀', '布']
+        player_choice = input("选择 石头, 剪刀 或 布: ")
+        computer_choice = random.choice(choices)
+        print(f"顧客选择了 {computer_choice}。")
+        if (player_choice == '石头' and computer_choice == '剪刀') or (player_choice == '剪刀' and computer_choice == '布') or (player_choice == '布' and computer_choice == '石头'):
+            print(f"{self.name} 赢了!客人已經沒有衣服了，被迫交出了一些錢財。")
+            self.balance += 100
+        elif player_choice == computer_choice:
+            print("平手!但是客人躍躍欲試")
+        else:
+            print(f"{self.name} 输了。為了拿回心愛的內褲，付出了一些錢財。")
+            self.balance -= 50
+
+    def rest(self):
+        self.energy += 20
+        self.happiness += 10
+        print(f"{self.name} 休息了，体力和快乐值有所提升。")
+
+    def repay_debt(self, amount):
+        if self.balance >= amount:
+            self.debt -= amount
+            self.balance -= amount
+            print(f"{self.name} 已还款 {amount}。")
+        else:
+            print("余额不足，无法还款。")
+
+    def display_status(self):
+        print(f"{self.name} 的当前余额为 {self.balance}，剩余债务为 {self.debt}，体力值为 {self.energy}，快乐值为 {self.happiness}，节操值为 {self.integrity}。")
+
+    def check_achievements(self):
+        if "经济自由" not in self.achievements and self.debt <= 0 and self.balance >= 500:
+            self.achievements.add("经济自由")
+            self.balance += 100 # 成就达成时的金钱奖励
+            print(f"恭喜！{self.name} 达成了成就：经济自由。获得100金钱奖励。")
+            # 可以根据需要添加更多成就检查逻辑和奖励
+
+# 这是随机事件触发函数的定义
+def trigger_random_event(player):
+    event_chance = random.randint(1, 10)
+    if event_chance <= 3: # 30%的几率触发随机事件
+        event = random.choice([
+        ("你收到了尤里观奈在女僕咖啡廳打工寄來的工資", lambda p: setattr(p, 'balance', p.balance + 100)),
+        ("你搭角的時候把方桌摩圓了，花費了一些金錢買新的", lambda p: setattr(p, 'balance', max(0, p.balance - 50))),
+        # 可以添加更多事件
+        ])
+        event[1](player)
+        print(f"随机事件：{event[0]}。{player.name}的状态发生了变化。")
+
+# 检查游戏结束条件
+def check_endings(player):
+    if player.integrity < 10:
+        print(f"{player.name} 的节操值低于10，已經回不去了，你沉迷於快樂中，以後要一直當rbq了，因為節操過低，进入了坏结局。bad end。")
+        return True
+    elif player.happiness < 10:
+        print(f"{player.name} 的快乐值低于10，連續的高強度工作讓你抑鬱了，你进入了悲伤结局，主動去當rbq，再也回不去了。游戏结束。bad end")
+        return True
+    elif player.time_units <= 0:
+        if player.debt <= 0:
+            print(f"{player.name} 在时间内还清了所有债务，你成功的成为自由人。游戏结束。happy end")
+        else:
+            print(f"{player.name} 没有在时间内还清债务，你被債主拖走當rbq去還債了，进入了失败结局。游戏结束。bad end")
+            return True
+    return False
+
+def main_game_loop():
+    player_name = input("请输入玩家名称: ")
+    player = Player(player_name)
+    game_over = False
+    while not game_over:
+        action = input("选择动作：工作(w) 还债(r) 查看状态(s) 休息(t) 野球拳(p) 访问商店(v): ").lower()
+        if action == 'w':
+            job = input("选择工作：清洁(c) 野球拳(r) 援交(s): ").lower()
+            job_mapping = {'c': 'cleaning', 'r': 'rock_paper_scissors', 's': 'service'}
+            player.work(job_mapping.get(job, 'cleaning'))
+        elif action == 'p':
+            player.play_rock_paper_scissors()
+        elif action == 't':
+            player.rest()
+        elif action == 'r':
+            amount = int(input("输入还款金额: "))
+            player.repay_debt(amount)
+        elif action == 's':
+            player.display_status()
+        elif action == 'v':
+            player.visit_store()
+        else:
+            print("无效的动作。")
+        player.check_achievements() # 检查成就
+        trigger_random_event(player) # 尝试触发随机事件
+        game_over = check_endings(player)
+        if not game_over:
+            player.time_units -= 1 # 消耗时间单位
+        if player.time_units <= 0:
+            print(f"{player.name} 的时间单位用尽。")
+        game_over = check_endings(player) # 再次检查游戏结束条件
+
+if __name__ == "__main__":
+    main_game_loop()
